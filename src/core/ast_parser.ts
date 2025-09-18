@@ -90,6 +90,12 @@ export class CASTParser {
 
     this.traverseNode(root, (node) => {
       if (node.type === 'declaration') {
+        // 检查是否在结构体定义内部（通过源代码分析）
+        const lineNumber = node.startPosition.row;
+        if (this.isInStructDefinition(sourceLines, lineNumber)) {
+          // 跳过结构体字段声明
+          return;
+        }
         const vars = this.parseDeclaration(node, currentScope, sourceLines);
         declarations.push(...vars);
       } else if (node.type === 'parameter_declaration') {
@@ -425,6 +431,22 @@ export class CASTParser {
    * 获取当前作用域
    */
   private getCurrentScope(node: ASTNode): string {
+    // 检查是否是函数参数
+    const paramDecl = this.findAncestorByType(node, 'parameter_declaration');
+    if (paramDecl) {
+      // 对于参数，作用域应该是其所属的函数名
+      const funcDef = this.findAncestorByType(paramDecl, 'function_definition');
+      if (funcDef) {
+        const declarator = this.findChildByType(funcDef, 'function_declarator');
+        if (declarator) {
+          const identifier = this.findChildByType(declarator, 'identifier');
+          if (identifier) {
+            return identifier.text;
+          }
+        }
+      }
+    }
+
     // 简化实现，返回 global 或函数名
     const funcDef = this.findAncestorByType(node, 'function_definition');
     if (funcDef) {
@@ -474,6 +496,38 @@ export class CASTParser {
       }
     }
     return children;
+  }
+
+  /**
+   * 检查指定行是否在结构体定义内部
+   */
+  private isInStructDefinition(sourceLines: string[], lineNumber: number): boolean {
+    // 检查前几行是否有未闭合的结构体定义
+    let structStartFound = false;
+    let braceBalance = 0;
+
+    for (let i = Math.max(0, lineNumber - 20); i <= lineNumber; i++) {
+      const line = sourceLines[i];
+
+      // 查找结构体定义开始
+      if (line.includes('typedef struct') || line.includes('struct ')) {
+        structStartFound = true;
+      }
+
+      // 统计大括号
+      const openCount = (line.match(/\{/g) || []).length;
+      const closeCount = (line.match(/\}/g) || []).length;
+      braceBalance += openCount - closeCount;
+
+      // 如果找到结束的分号，说明结构体定义已完成
+      if (structStartFound && braceBalance <= 0 && line.includes(';')) {
+        structStartFound = false;
+        braceBalance = 0;
+      }
+    }
+
+    // 如果找到了结构体开始但大括号还没平衡，说明在结构体内部
+    return structStartFound && braceBalance > 0;
   }
 
   /**

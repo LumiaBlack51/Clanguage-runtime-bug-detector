@@ -1,0 +1,42 @@
+正在扫描目录: C:\MUST\OneDrive - Macau University of Science and Technology\SoftwareEngineering\project\918\Clanguage-runtime-bug-detector\tests\graphs\buggy
+tests\graphs\buggy\bug_0.c:3: [Uninitialized] 变量声明后未初始化
+     int x; // BUG: uninitialized
+tests\graphs\buggy\bug_0.c:5: [Header] 使用printf但未包含<stdio.h>
+     printf("%s %d", x, 123); // BUG: type mismatch
+tests\graphs\buggy\bug_43.c:12: [Header] 使用malloc但未包含<stdlib.h>
+        int *ptr = malloc(sizeof(int) * 10);
+tests\graphs\buggy\bug_43.c:62: [Uninitialized] 变量声明后未初始化
+        int num;
+tests\graphs\buggy\bug_44.c:9: [Uninitialized] 变量声明后未初始化
+        int x;
+tests\graphs\buggy\bug_44.c:10: [Uninitialized] 变量声明后未初始化
+        int y;
+tests\graphs\buggy\bug_44.c:14: [Uninitialized] 变量声明后未初始化
+        int data;
+tests\graphs\buggy\bug_44.c:19: [Uninitialized] 变量声明后未初始化
+        int vertices;
+tests\graphs\buggy\bug_44.c:32: [Uninitialized] 变量声明后未初始化
+        struct Point point1;        // 标准结构体变量
+tests\graphs\buggy\bug_44.c:49: [Uninitialized] 变量声明后未初始化
+            int id;
+tests\graphs\buggy\bug_44.c:238: [Uninitialized] 变量声明后未初始化
+            int zip;
+tests\graphs\buggy\bug_44.c:243: [Uninitialized] 变量声明后未初始化
+            int age;
+tests\graphs\buggy\bug_49.c:12: [Uninitialized] 变量声明后未初始化
+        int local_var;                          // 未初始化的局部变量
+tests\graphs\buggy\bug_50.c:15: [Uninitialized] 变量声明后未初始化
+        extern int extern_var;                // 应该识别为 extern int，未初始化
+tests\graphs\buggy\graph.c:35: [Uninitialized] 变量声明后未初始化
+        int n; // 未初始化
+
+=== 基于AST的C代码安全扫描器 ===
+支持的检测功能:
+- 未初始化变量检测
+- 野指针/空指针解引用检测
+- 库函数头文件包含检查
+- 头文件拼写检查
+- 死循环检测
+- 数值范围检查
+- 内存泄漏检测
+- printf/scanf 格式检查
