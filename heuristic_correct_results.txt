@@ -1,0 +1,19 @@
+正在扫描目录: C:\MUST\OneDrive - Macau University of Science and Technology\SoftwareEngineering\project\918\Clanguage-runtime-bug-detector\tests\graphs\correct
+tests\graphs\correct\main.c:15: [Uninitialized] 变量使用前未初始化
+        bfs(g, 0, order, &cnt);
+tests\graphs\correct\main.c:18: [Uninitialized] 变量使用前未初始化
+        printf("BFS count=%d first=%d\n", cnt, order[0]);
+tests\graphs\correct\main.c:20: [Uninitialized] 变量使用前未初始化
+        cnt = 0; dfs(g, 0, order, &cnt);
+tests\graphs\correct\main.c:22: [Uninitialized] 变量使用前未初始化
+        printf("DFS count=%d first=%d\n", cnt, order[0]);
+tests\graphs\correct\main.c:39: [Uninitialized] 变量使用前未初始化
+        cnt2 = 0; dfs(g2, 0, order2, &cnt2);
+
+=== 启发式C代码安全扫描器 ===
+支持的检测功能:
+- 未初始化变量检测
+- 野指针检测
+- 空指针检测
+- 死循环检测
+- printf/scanf格式检查

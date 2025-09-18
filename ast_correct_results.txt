@@ -1,0 +1,18 @@
+正在扫描目录: C:\MUST\OneDrive - Macau University of Science and Technology\SoftwareEngineering\project\918\Clanguage-runtime-bug-detector\tests\graphs\correct
+tests\graphs\correct\avl_tree.c:7: [Uninitialized] 变量声明后未初始化
+        int key;
+tests\graphs\correct\avl_tree.c:8: [Uninitialized] 变量声明后未初始化
+        int height;
+tests\graphs\correct\avl_tree.c:16: [Uninitialized] 变量声明后未初始化
+        int size;
+
+=== 基于AST的C代码安全扫描器 ===
+支持的检测功能:
+- 未初始化变量检测
+- 野指针/空指针解引用检测
+- 库函数头文件包含检查
+- 头文件拼写检查
+- 死循环检测
+- 数值范围检查
+- 内存泄漏检测
+- printf/scanf 格式检查

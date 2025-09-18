@@ -1,0 +1,55 @@
+正在扫描目录: C:\MUST\OneDrive - Macau University of Science and Technology\SoftwareEngineering\project\918\Clanguage-runtime-bug-detector\tests\graphs\buggy
+tests\graphs\buggy\bug_0.c:5: [Uninitialized] 变量使用前未初始化
+     printf("%s %d", x, 123); // BUG: type mismatch
+tests\graphs\buggy\bug_0.c:6: [Uninitialized] 变量使用前未初始化
+     scanf("%d", x); // BUG: missing &
+tests\graphs\buggy\bug_0.c:6: [Format] scanf 实参建议传地址（使用 &var）
+     scanf("%d", x); // BUG: missing &
+tests\graphs\buggy\bug_0.c:7: [Uninitialized] 变量使用前未初始化
+     for(;;){ if(x>0) break; } // BUG: likely infinite
+tests\graphs\buggy\bug_43.c:23: [Uninitialized] 变量使用前未初始化
+        strcpy(dest, "hello");
+tests\graphs\buggy\bug_43.c:59: [Uninitialized] 变量使用前未初始化
+        sprintf(buffer, "Number: %d", 42);
+tests\graphs\buggy\bug_43.c:63: [Uninitialized] 变量使用前未初始化
+        scanf("%d", &num);
+tests\graphs\buggy\bug_45.c:12: [Wild pointer] 潜在野指针解引用（指针未初始化）
+        str1[0] = 'A'; // BUG: 解引用野指针 - 应该报错
+tests\graphs\buggy\bug_45.c:15: [Wild pointer] 潜在野指针解引用（指针未初始化）
+        arr1[0] = 3.14; // BUG: 解引用野指针 - 应该报错
+tests\graphs\buggy\bug_45.c:33: [Wild pointer] 潜在野指针解引用（指针未初始化）
+        printf("%d\n", *ptr3); // BUG: 解引用野指针 - 应该报错
+tests\graphs\buggy\bug_45.c:36: [Uninitialized] 变量使用前未初始化
+        scanf("%s", str3); // BUG: 野指针作为参数 - 应该报错
+tests\graphs\buggy\bug_45.c:95: [Wild pointer] 潜在野指针解引用（指针未初始化）
+        arr1[0] = 1; // BUG: 解引用野指针 - 应该报错
+tests\graphs\buggy\bug_45.c:96: [Wild pointer] 潜在野指针解引用（指针未初始化）
+        arr1[1] = 2; // BUG: 解引用野指针 - 应该报错
+tests\graphs\buggy\bug_48.c:7: [Infinite loop] 潜在死循环（无显式退出）
+        for(;;) {
+tests\graphs\buggy\bug_48.c:15: [Infinite loop] 潜在死循环（无显式退出）
+        while(1) {
+tests\graphs\buggy\bug_48.c:72: [Infinite loop] 潜在死循环（无显式退出）
+        while(true) {
+tests\graphs\buggy\bug_48.c:83: [Infinite loop] 潜在死循环（无显式退出）
+        for(;;) {
+tests\graphs\buggy\bug_48.c:112: [Infinite loop] 潜在死循环（无显式退出）
+            for(;;) {
+tests\graphs\buggy\graph.c:29: [Infinite loop] 潜在死循环（无显式退出）
+        for(;;) {
+tests\graphs\buggy\graph.c:36: [Uninitialized] 变量使用前未初始化
+        int* q = (int*)malloc(sizeof(int) * (size_t)n); // BUG: 使用未初始化 n
+tests\graphs\buggy\main.c:10: [Uninitialized] 变量使用前未初始化
+        dijkstra(g, 0, dist);
+tests\graphs\buggy\main.c:13: [Uninitialized] 变量使用前未初始化
+        printf("%d %d %d\n", dist[0], dist[1]); // BUG: 少参数
+tests\graphs\buggy\main.c:13: [Format] printf 参数少于格式化占位数
+        printf("%d %d %d\n", dist[0], dist[1]); // BUG: 少参数
+
+=== 启发式C代码安全扫描器 ===
+支持的检测功能:
+- 未初始化变量检测
+- 野指针检测
+- 空指针检测
+- 死循环检测
+- printf/scanf格式检查
