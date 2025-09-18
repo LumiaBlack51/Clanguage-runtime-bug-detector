@@ -1,5 +1,10 @@
 # Clanguage Runtime Bug Detector
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
+[![tree-sitter](https://img.shields.io/badge/tree--sitter-0.22.4-green.svg)](https://tree-sitter.github.io/tree-sitter/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+
 一个基于**抽象语法树(AST)**的 C 代码安全扫描工具，使用 tree-sitter 进行精确的语法分析，检测常见的编程错误和安全问题。
 
 ## 🚀 核心技术
