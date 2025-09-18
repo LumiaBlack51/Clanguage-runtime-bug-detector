@@ -125,38 +125,113 @@ function fallbackTextAnalysisForDir(dir: string): Issue[] {
 function fallbackTextAnalysis(filePath: string, sourceCode: string, sourceLines: string[]): Issue[] {
   const issues: Issue[] = [];
 
-  for (let i = 0; i < sourceLines.length; i++) {
-    const line = sourceLines[i];
+  // 分析上下文信息
+  const structContexts: { [line: number]: boolean } = {};
+  let inStruct = false;
+  let braceCount = 0;
 
-    // 简单的未初始化检测
-    if (/int\s+\w+\s*;/.test(line) && !line.includes('=')) {
-      issues.push({
-        file: filePath,
-        line: i + 1,
-        category: 'Uninitialized',
-        message: '变量声明后未初始化',
-        codeLine: line
-      });
+  for (let i = 0; i < sourceLines.length; i++) {
+    const line = sourceLines[i].trim();
+
+    // 检测结构体定义开始
+    if (line.match(/^\s*typedef\s+struct\s+\w*\s*\{/) || line.match(/^\s*struct\s+\w*\s*\{/)) {
+      inStruct = true;
+      braceCount = 1;
     }
 
-    // 简单的库函数检测
+    // 检测结构体定义结束
+    if (inStruct) {
+      const openBraces = (line.match(/\{/g) || []).length;
+      const closeBraces = (line.match(/\}/g) || []).length;
+      braceCount += openBraces - closeBraces;
+
+      if (braceCount <= 0) {
+        inStruct = false;
+      }
+    }
+
+    // 标记结构体上下文中的行
+    if (inStruct) {
+      structContexts[i + 1] = true;
+    }
+  }
+
+  for (let i = 0; i < sourceLines.length; i++) {
+    const line = sourceLines[i];
+    const lineNumber = i + 1;
+
+    // 改进的未初始化变量检测
+    // 只检测函数内部的变量声明，排除结构体字段
+    if (!structContexts[lineNumber]) {
+      // 匹配变量声明但排除函数参数、数组声明等
+      const varMatch = line.match(/(?:^|\s+)(int|char|float|double|long|short)\s+(\w+)\s*(?:\[[^\]]*\])?\s*;/);
+      if (varMatch && !line.includes('=') && !line.includes('(') && !line.includes('return')) {
+        const varName = varMatch[2];
+        // 进一步检查是否是真正的未初始化变量
+        if (!isArrayDeclaration(line) && !isFunctionParameter(sourceLines, i, varName)) {
+          // 对于全局变量，我们也需要检测（但要排除结构体字段）
+          if (isGlobalVariable(sourceLines, i) || isInFunctionContext(sourceLines, i)) {
+            issues.push({
+              file: filePath,
+              line: lineNumber,
+              category: 'Uninitialized',
+              message: '变量声明后未初始化',
+              codeLine: line.trim()
+            });
+          }
+        }
+      }
+    }
+
+    // 改进的库函数检测
     if (/malloc\s*\(/.test(line) && !sourceCode.includes('#include <stdlib.h>')) {
       issues.push({
         file: filePath,
-        line: i + 1,
+        line: lineNumber,
         category: 'Header',
         message: '使用malloc但未包含<stdlib.h>',
-        codeLine: line
+        codeLine: line.trim()
       });
     }
 
     if (/printf\s*\(/.test(line) && !sourceCode.includes('#include <stdio.h>')) {
       issues.push({
         file: filePath,
-        line: i + 1,
+        line: lineNumber,
         category: 'Header',
         message: '使用printf但未包含<stdio.h>',
-        codeLine: line
+        codeLine: line.trim()
+      });
+    }
+
+    // 添加更多库函数检测
+    if (/free\s*\(/.test(line) && !sourceCode.includes('#include <stdlib.h>')) {
+      issues.push({
+        file: filePath,
+        line: lineNumber,
+        category: 'Header',
+        message: '使用free但未包含<stdlib.h>',
+        codeLine: line.trim()
+      });
+    }
+
+    if (/(scanf|fprintf|fprintf)\s*\(/.test(line) && !sourceCode.includes('#include <stdio.h>')) {
+      issues.push({
+        file: filePath,
+        line: lineNumber,
+        category: 'Header',
+        message: '使用stdio函数但未包含<stdio.h>',
+        codeLine: line.trim()
+      });
+    }
+
+    if (/(sin|cos|tan|sqrt|pow)\s*\(/.test(line) && !sourceCode.includes('#include <math.h>')) {
+      issues.push({
+        file: filePath,
+        line: lineNumber,
+        category: 'Header',
+        message: '使用math函数但未包含<math.h>',
+        codeLine: line.trim()
       });
     }
   }
@@ -164,15 +239,105 @@ function fallbackTextAnalysis(filePath: string, sourceCode: string, sourceLines:
   return issues;
 }
 
-// 根据问题严重程度获取类别
-function getCategoryFromSeverity(severity: number): string {
-  switch (severity) {
-    case 0: return 'Error';
-    case 1: return 'Warning';
-    case 2: return 'Info';
-    case 3: return 'Hint';
-    default: return 'Unknown';
+// 辅助函数：检查是否在函数上下文中
+function isInFunctionContext(sourceLines: string[], lineIndex: number): boolean {
+  // 从当前行向上查找函数定义
+  for (let i = lineIndex; i >= 0; i--) {
+    const line = sourceLines[i].trim();
+
+    // 找到函数定义
+    if (line.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\([^)]*\)\s*\{/)) {
+      return true;
+    }
+
+    // 找到另一个大括号开始，说明在其他作用域内
+    if (line.includes('{') && !line.includes('}')) {
+      // 检查是否是函数定义
+      let braceCount = 0;
+      for (let j = i; j >= 0; j--) {
+        const checkLine = sourceLines[j].trim();
+        braceCount += (checkLine.match(/\{/g) || []).length;
+        braceCount -= (checkLine.match(/\}/g) || []).length;
+
+        if (braceCount < 0) {
+          break; // 找到匹配的结束大括号
+        }
+
+        if (checkLine.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\([^)]*\)\s*\{/)) {
+          return true;
+        }
+      }
+      break;
+    }
+
+    // 如果遇到另一个函数定义或全局声明，停止搜索
+    if (line.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\([^)]*\)\s*;/) ||
+        line.match(/^#/) ||
+        line.match(/^\s*$/)) {
+      break;
+    }
   }
+
+  return false;
+}
+
+// 辅助函数：检查是否是数组声明
+function isArrayDeclaration(line: string): boolean {
+  return /\w+\s*\[[^\]]*\]\s*;/.test(line);
+}
+
+// 辅助函数：检查是否是函数参数
+function isFunctionParameter(sourceLines: string[], lineIndex: number, varName: string): boolean {
+  // 从当前行向上查找函数定义
+  for (let i = lineIndex; i >= 0; i--) {
+    const line = sourceLines[i].trim();
+
+    // 检查函数定义中的参数
+    const funcMatch = line.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\(([^)]*)\)/);
+    if (funcMatch) {
+      const params = funcMatch[1];
+      if (params.includes(varName)) {
+        return true;
+      }
+    }
+
+    // 如果遇到另一个函数定义或大括号，停止搜索
+    if (line.includes('{') || line.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\([^)]*\)\s*;/)) {
+      break;
+    }
+  }
+
+  return false;
+}
+
+// 辅助函数：检查是否是全局变量
+function isGlobalVariable(sourceLines: string[], lineIndex: number): boolean {
+  // 从当前行向上查找
+  for (let i = lineIndex; i >= 0; i--) {
+    const line = sourceLines[i].trim();
+
+    // 如果遇到函数定义，说明不是全局变量
+    if (line.match(/(?:^|\s+)(?:int|void|char|float|double)\s+\w+\s*\([^)]*\)\s*\{/)) {
+      return false;
+    }
+
+    // 如果遇到大括号，说明在局部作用域内
+    if (line.includes('{')) {
+      return false;
+    }
+
+    // 如果遇到include或空行，继续向上查找
+    if (line.startsWith('#') || line === '') {
+      continue;
+    }
+
+    // 如果遇到其他声明，可能是全局作用域
+    if (line.match(/(?:^|\s+)(?:int|void|char|float|double|struct|typedef)/)) {
+      return true;
+    }
+  }
+
+  return true; // 默认认为是全局变量
 }
 
 // 模拟 VSCode 的类型和接口用于 CLI
