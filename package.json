@@ -48,6 +48,6 @@
   },
   "dependencies": {
     "tree-sitter": "^0.22.4",
-    "tree-sitter-c": "^0.24.1"
+    "tree-sitter-c": "^0.20.7"
   }
 }
